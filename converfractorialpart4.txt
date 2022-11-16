@@ -1,0 +1,157 @@
+package converter // Do not delete this line
+import java.math.BigDecimal
+import java.math.BigInteger
+import java.math.RoundingMode
+
+const val numberToChar = 87
+val sixsteen = BigInteger.valueOf(16)
+val eleven = BigInteger.valueOf(11)
+val ten = BigInteger.valueOf(10)
+val eight = BigInteger.valueOf(8)
+val nine = BigInteger.valueOf(9)
+val thirtysix = BigInteger.valueOf(36)
+
+fun num16(n: BigInteger): String {
+    return (n + numberToChar.toBigInteger()).toInt().toChar().toString()
+}
+fun num10(ch: Char): Int {
+    val char = ch.toLowerCase()
+    return char.code - numberToChar
+}
+// integer part conversion
+fun fromDemical(wholePartDec: BigDecimal,targBase: BigDecimal): String {
+    val numInDec = wholePartDec.toBigInteger()
+    val targetBase = targBase.toBigInteger()
+    var quotient = numInDec
+    var remainder = ""
+    var converRes = ""
+    if (targetBase == eight && numInDec < eight)
+        return numInDec.toString()
+    else if (targetBase >= eleven && numInDec < ten)
+        return numInDec.toString()
+    else if (targetBase >= eleven && numInDec in ten..targetBase - BigInteger.ONE)
+        return num16(numInDec)
+    else {
+        while (quotient >= targetBase) {
+            var num = quotient / targetBase
+            var rem = quotient % targetBase
+            remainder = rem.toString()
+            quotient = num
+            if (rem > nine) remainder = num16(rem)
+            converRes = converRes + remainder
+            if (quotient < targetBase) {
+                if (quotient < ten) converRes = converRes + quotient.toString()
+                else converRes = converRes + num16(quotient)
+            }
+        }
+        converRes = (converRes.reversed())
+        return converRes
+    }
+    return ""
+}
+
+fun toDecimal(sourceNumber: String,sourceBase: Int): BigDecimal {
+    var decimalResult = BigDecimal.valueOf(0)
+    val number = sourceNumber.reversed()
+    for (i in 0..sourceNumber.lastIndex) {
+        var num = BigDecimal.valueOf(0)
+        if (number[i].isDigit()) {
+            num = number[i].toString().toBigDecimal()
+        } else {
+            num = num10(number[i]).toBigDecimal()
+        }
+        decimalResult = decimalResult + num * power(sourceBase, i)
+    }
+    return decimalResult
+}
+fun power(num: Int,pow: Int): BigDecimal {
+    var numBig = num.toBigDecimal()
+    var powBig = pow.toBigDecimal()
+    var numPow = BigDecimal.ONE
+    if (powBig == BigDecimal.ZERO) return BigDecimal.ONE
+    else if (powBig == BigDecimal.ONE) return numBig
+    else {
+        repeat(pow) {
+            numPow = numPow * numBig
+
+        }
+        return numPow
+    }
+}
+// fractional conversion
+fun negativePower(n: Int,pow: Int): BigDecimal{
+    val num = n.toBigDecimal()
+    return BigDecimal.ONE.divide(num.pow(pow) ,50, RoundingMode.HALF_EVEN)
+}
+fun fractionalToDecimal(fractionalPart: String, sourceBase: Int): BigDecimal {
+    var decimalResult = BigDecimal.valueOf(0)
+    if (fractionalPart == "0") return decimalResult
+    for (i in 0..fractionalPart.lastIndex) {
+        var num = BigDecimal.valueOf(0)
+        if (fractionalPart[i].isDigit()){
+            num = fractionalPart[i].toString().toBigDecimal()
+        }
+        else {
+            num = num10(fractionalPart[i]).toBigDecimal()
+        }
+        decimalResult = decimalResult + num * negativePower(sourceBase, i + 1)
+    }
+    return decimalResult.setScale(50, RoundingMode.HALF_EVEN)
+}
+fun fractionalFromDecimal(fractionalPartDec: BigDecimal, targetBase: BigDecimal): String {
+    var converRes = ""
+    var ost = fractionalPartDec
+    if (fractionalPartDec == BigDecimal.ZERO) return "0"
+    repeat(5) {
+        var rem = BigInteger("0")
+        var intRem = ost.multiply(targetBase).setScale(5, RoundingMode.HALF_EVEN)
+        var remList = intRem.toString().split(".")
+        rem = remList[0].toBigInteger()
+        if (rem < ten) converRes = converRes + rem.toString()
+        else converRes = converRes + num16(rem)
+        ost = intRem - rem.toBigDecimal()
+    }
+    return converRes
+}
+fun convertor(sourceBase: Int, targetBase: BigDecimal, answer: String) {
+    val number = answer.split(".")
+    if (number.size > 1) {
+        val wholePart = number[0]
+        val fractionalPart = number[1]
+        //println(fractionalPart)
+        val wholePartDec = toDecimal(wholePart, sourceBase)
+        val fractionalPartDec = fractionalToDecimal(fractionalPart, sourceBase)
+        //println("wholePartDec :$wholePartDec")
+        // println("fractionalPartDec :$fractionalPartDec")
+        val wholePartResult = fromDemical(wholePartDec, targetBase)
+        val fractionalPartResult = fractionalFromDecimal(fractionalPartDec, targetBase)
+        println("Conversion result: $wholePartResult.$fractionalPartResult")
+    }
+    else {
+        val wholePart = number[0]
+        val wholePartDec = toDecimal(wholePart, sourceBase)
+        val wholePartResult = fromDemical(wholePartDec, targetBase)
+        println("Conversion result: $wholePartResult")
+    }
+}
+fun main(args: Array<String>) {
+    while (true){
+        println("Enter two numbers in format: {source base} {target base} (To quit type /exit)")
+        val answer1 = readln()
+        if (answer1 == "/exit") break
+        else {
+            val (base, tBase) = answer1.split(" ")
+            val sourceBase = base.toInt()
+            val targetBase = tBase.toBigDecimal()
+            while(true) {
+                println("Enter number in base $sourceBase to convert to base $targetBase (To go back type /back)")
+                val answer2 = readln()
+                if (answer2 == "/back") break
+                else {
+                    val sourceNumber = answer2
+                    convertor(sourceBase, targetBase, sourceNumber)
+                }
+            }
+        }
+    }
+}

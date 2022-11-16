@@ -1,0 +1,109 @@
+package converter // Do not delete this line
+import java.math.BigInteger
+const val numberToChar = 55
+val sixsteen = BigInteger.valueOf(16)
+val eleven = BigInteger.valueOf(11)
+val ten = BigInteger.valueOf(10)
+val eight = BigInteger.valueOf(8)
+val nine = BigInteger.valueOf(9)
+val thirtysix = BigInteger.valueOf(36)
+
+fun num16(n: BigInteger): String {
+    return (n + numberToChar.toBigInteger()).toInt().toChar().toString()
+}
+fun num10(ch: Char): Int {
+    val char = ch.toUpperCase()
+    return char.code - numberToChar
+}
+fun fromDemical(numInDec: BigInteger,targetBase: BigInteger): String {
+    var quotient = numInDec
+    var remainder = ""
+    var converRes = ""
+    if (targetBase == eight && numInDec < eight)
+        return numInDec.toString()
+    else if (targetBase >= eleven && numInDec < ten)
+        return numInDec.toString()
+    else if (targetBase >= eleven && numInDec in ten..targetBase - BigInteger.ONE)
+        return num16(numInDec)
+    else {
+        while (quotient >= targetBase) {
+            var num = quotient / targetBase
+            var rem = quotient % targetBase
+            remainder = rem.toString()
+            quotient = num
+            //println(remainder)
+            if (rem > nine) remainder = num16(rem)
+            converRes = converRes + remainder
+            //println(quotient)
+            if (quotient < targetBase) {
+                if (quotient < ten) converRes = converRes + quotient.toString()
+                else converRes = converRes + num16(quotient)
+            }
+        }
+        converRes = (converRes.reversed())
+        return converRes
+        //println("Conversion to decimal result: $converRes")
+    }
+    return ""
+}
+
+fun toDecimal(sourceNumber: String,sourceBase: Int): BigInteger {
+    var decimalResult = BigInteger.valueOf(0)
+    val number = sourceNumber.reversed()
+    for (i in 0..sourceNumber.lastIndex) {
+        var num = BigInteger.valueOf(0)
+        if (number[i].isDigit()) {
+            num = number[i].toString().toBigInteger()
+            //println(num)
+        } else {
+            num = num10(number[i]).toBigInteger()
+        }
+        decimalResult = decimalResult + num * power(sourceBase, i)
+        //println(decimalResult)
+
+    }
+    return decimalResult
+}
+fun power(num: Int,pow: Int): BigInteger {
+    var numBig = num.toBigInteger()
+    var powBig = pow.toBigInteger()
+    var numPow = BigInteger.ONE
+    if (powBig == BigInteger.ZERO) return BigInteger.ONE
+    else if (powBig == BigInteger.ONE) return numBig
+    else {
+        repeat(pow) {
+            numPow = numPow * numBig
+
+        }
+        return numPow
+    }
+}
+fun converot(sourceBase: Int,targetBase: BigInteger,sourceNumber: String) {
+    var numInDec: BigInteger = BigInteger.valueOf(0)
+    if (sourceBase == 10) numInDec = sourceNumber.toBigInteger()
+    else numInDec = toDecimal(sourceNumber, sourceBase)
+    //println(numInDec)
+    val result = fromDemical(numInDec, targetBase)
+    println("Conversion result: $result")
+}
+fun main(args: Array<String>) {
+    while (true){
+        println("Enter two numbers in format: {source base} {target base} (To quit type /exit)")
+        val answer1 = readln()
+        if (answer1 == "/exit") break
+        else {
+            val (base, tBase) = answer1.split(" ")
+            val sourceBase = base.toInt()
+            val targetBase = tBase.toBigInteger()
+            while(true) {
+                println("Enter number in base $sourceBase to convert to base $targetBase (To go back type /back)")
+                val answer2 = readln()
+                if (answer2 == "/back") break
+                else {
+                    val sourceNumber = answer2
+                    converot(sourceBase, targetBase, sourceNumber)
+                }
+            }
+        }
+    }
+}

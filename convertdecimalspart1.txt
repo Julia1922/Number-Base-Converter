@@ -1,0 +1,35 @@
+package converter // Do not delete this line
+
+fun num16(n: Int): String {
+    when (n) {
+        10 -> return "A"
+        11 -> return "B"
+        12 -> return "C"
+        13 -> return "D"
+        14 -> return "E"
+        15 -> return "F"
+    }
+    return ""
+}
+fun main(args: Array<String>) {
+    var remainder = ""
+    var converRes = ""
+    println("Enter number in decimal system:")
+    val numInDec = readln().toInt()
+    println("Enter target base:")
+    val targetBase = readln().toInt()
+    var quotient = numInDec
+
+    while (quotient >= targetBase) {
+        var num = quotient / targetBase
+        var rem = quotient %  targetBase
+        remainder = rem.toString()
+        quotient = num
+        if (rem > 9) remainder = num16(rem)
+        converRes = converRes + remainder
+        if (quotient < targetBase) converRes = converRes + quotient.toString()
+    }
+    converRes = (converRes.reversed())
+    println("Conversion result: $converRes")
+
+}
